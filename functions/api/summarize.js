@@ -12,14 +12,17 @@ export async function onRequestPost(context) {
   const text = entries.map(e => e.b).join('\n');
   const prompt = '以下はユーザーの育成日記です。数行で優しい口調でまとめてください。\n\n' + text;
 
-  const aiRes = await env.AI.run(MODEL, {
-    messages: [
-      { role: 'system', content: 'あなたはパセリっち。ユーザーの日記を優しくまとめてください。' },
-      { role: 'user', content: prompt }
-    ],
-    max_tokens: 150
-  });
-
-  const summary = (aiRes?.response || '').trim();
-  return Response.json({ summary });
+  try {
+    const aiRes = await env.AI.run(MODEL, {
+      messages: [
+        { role: 'system', content: 'あなたはパセリっち。ユーザーの日記を優しくまとめてください。' },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 150
+    });
+    const summary = (aiRes?.response || '').trim();
+    return Response.json({ summary });
+  } catch (e) {
+    return Response.json({ summary: '', error: e.message || String(e) }, { status: 500 });
+  }
 }
