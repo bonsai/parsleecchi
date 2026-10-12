@@ -22,3 +22,4 @@
 - #4 音声日記: transcript / mood / eval & feed
 - #5 Cloudflare デプロイ
 - #6 REST API 完成 & フロント連携（state / talk / diary）
+# Cloudflare Pages
