@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>サービス パセリっち — 話しかけると育つ育成日記</title>
+<meta name="description" content="話しかけるとパセリが育つ、たまごっちと日記の融合サービス。あなたの言葉が葉っぱになる。"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",Meiryo,sans-serif;background:#faf9f7;color:#1a1a1a;min-height:100vh;display:flex;justify-content:center;padding:24px 12px}
+.pw{width:100%;max-width:760px}
+.pw-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.pw-title{font-size:17px;font-weight:600}
+.pw-sub{font-size:12px;color:#8a8880;margin-top:2px}
+.pw-chip{font-size:12px;padding:2px 10px;border-radius:6px;border:1px solid #e2e0da;color:#6b6960;white-space:nowrap;background:#fff}
+.pw-chip.good{color:#2e7d32;border-color:#a5d6a7;background:#e8f5e9}
+.pw-chip.care{color:#c62828;border-color:#ef9a9a;background:#ffebee}
+.pw-grid{display:grid;grid-template-columns:250px 1fr;gap:16px;margin-top:16px}
+.pw-bubble{font-size:13px;line-height:19px;background:#fff;border:1px solid #e2e0da;border-radius:10px;padding:8px 12px;position:relative}
+.pw-bubble:after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;background:inherit;border-right:1px solid #e2e0da;border-bottom:1px solid #e2e0da;transform:translateX(-50%) rotate(45deg)}
+.pw-stagebadge{position:absolute;margin-top:8px;z-index:2;font-size:12px;font-weight:600;padding:2px 10px;border-radius:6px;background:#1a1a1a;color:#fff}
+.pw-scene{position:relative}
+.pw-scenebox{margin-top:8px;border:1px solid #e2e0da;border-radius:12px;padding:8px;position:relative;background:#fff}
+.pw-scenebox svg{display:block}
+.pw-gain{position:absolute;left:50%;top:40%;font-size:15px;font-weight:600;color:#2e7d32;opacity:0;pointer-events:none}
+.pw-gain.show{animation:pwRise 1s ease-out forwards}
+@keyframes pwRise{0%{opacity:0;transform:translateY(8px)}20%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
+.pw-progress{margin-top:12px}
+.pw-progress-row{display:flex;justify-content:space-between;font-size:12px;color:#8a8880;margin-bottom:4px;font-variant-numeric:tabular-nums}
+.pw-bar{height:6px;border-radius:6px;background:#eeece7;overflow:hidden}
+.pw-bar-fill{height:100%;border-radius:6px;background:#43a047;width:0%;transition:width .25s ease-out}
+.pw-stats{display:flex;gap:16px;margin-top:12px}
+.pw-stat-v{font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.pw-stat-k{font-size:12px;color:#8a8880}
+.pw-quick{display:flex;flex-wrap:wrap;gap:8px}
+.pw-q{font-size:13px;padding:4px 12px;border-radius:6px;border:1px solid #e2e0da;background:#fff;color:#6b6960;cursor:pointer;transition:color .12s,border-color .12s}
+.pw-q:hover{color:#1a1a1a;border-color:#1a1a1a}
+.pw-diaryhead{display:flex;align-items:center;gap:6px;margin-top:16px;font-size:14px;font-weight:600;color:#6b6960}
+.pw-diaryhint{font-size:12px;font-weight:400;color:#b5b2a9}
+.pw-diary{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.pw-entry{border:1px solid #e2e0da;border-radius:10px;padding:8px 12px;position:relative;background:#fff}
+.pw-entry-t{font-size:12px;color:#8a8880;font-variant-numeric:tabular-nums}
+.pw-entry-x{font-size:12px;color:#2e7d32;font-weight:600}
+.pw-entry-b{font-size:13px;line-height:19px;margin-top:2px}
+.pw-entry .pw-del{position:absolute;top:6px;right:8px;opacity:0;font-size:14px;line-height:1;color:#b5b2a9;background:none;border:none;cursor:pointer;transition:opacity .12s,color .12s}
+.pw-entry:hover .pw-del,.pw-entry:focus-within .pw-del{opacity:1}
+.pw-del:hover{color:#c62828}
+.pw-empty{font-size:13px;color:#b5b2a9;border:1px dashed #e2e0da;border-radius:10px;padding:12px;text-align:center;background:#fff}
+.pw-inputrow{display:flex;gap:8px;margin-top:16px}
+.pw-input{flex:1;border:1px solid #e2e0da;border-radius:10px;padding:8px 12px;background:#fff;color:#1a1a1a;outline:none;font-size:16px}
+.pw-input:focus{border-color:#1a1a1a}
+.pw-send{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:none;background:#1a1a1a;color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+.pw-send:hover{background:#333}
+.pw-reset{margin-top:8px;font-size:12px;color:#b5b2a9;background:none;border:none;cursor:pointer;padding:0}
+.pw-reset:hover{color:#c62828}
+.leaf{fill:rgba(67,160,71,.82);stroke:rgba(67,160,71,.6);stroke-width:1}
+.stem{fill:none;stroke:#43a047;stroke-width:2.5;stroke-linecap:round}
+.st{opacity:0;transform:scale(.6) translateY(8px);transform-origin:100px 170px;transition:opacity .25s ease-out,transform .25s ease-out}
+.st.on{opacity:1;transform:none}
+.flower{fill:#fff;stroke:#b5b2a9;stroke-width:1.4}
+#plant{transform-origin:100px 170px;transition:transform .25s ease-out}
+.pw-boast{display:inline-block;margin-top:6px;font-size:12px;color:#6b6960;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
+@media (max-width:560px){.pw-grid{grid-template-columns:1fr}}
+@media (prefers-color-scheme:dark){
+body{background:#17171a;color:#e8e6e3}
+.pw-chip,.pw-q,.pw-bubble,.pw-scenebox,.pw-entry,.pw-empty,.pw-input{background:#1f1f23;border-color:#333;color:#e8e6e3}
+.pw-chip.good{color:#7bd88a;border-color:#2f5e35;background:#15251a}
+.pw-chip.care{color:#f08888;border-color:#5e2f2f;background:#251515}
+.pw-sub,.pw-stat-k,.pw-diaryhint,.pw-progress-row{color:#8a8880}
+.pw-diaryhead{color:#a8a69f}
+.pw-bar{background:#2a2a2e}
+.pw-send{background:#e8e6e3;color:#17171a}
+.pw-send:hover{background:#c9c7c3}
+.flower{fill:#1f1f23;stroke:#555}
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div class="pw">
+  <div class="pw-head">
+    <div>
+      <div class="pw-title">サービス パセリっち</div>
+      <div class="pw-sub">話しかけると育つ、育成日記。あなたの言葉が葉っぱになる。</div>
+    </div>
+    <div class="pw-chip" id="moodChip">ふつう</div>
+  </div>
+
+  <div class="pw-grid">
+    <div class="pw-scene">
+      <div class="pw-bubble"><span id="bubbleText">はじめまして、ぼくパセリっち。話しかけてくれると、どんどん育つよ。</span></div>
+      <div class="pw-stagebadge" id="stageBadge">タネ</div>
+      <div class="pw-scenebox">
+        <svg viewBox="0 0 200 240" width="100%" aria-label="パセリっち">
+          <ellipse cx="100" cy="171" rx="34" ry="6" fill="#eeece7"/>
+          <g id="plant"></g>
+          <g>
+            <rect x="58" y="164" width="84" height="14" rx="4" fill="#fff" stroke="#e2e0da"/>
+            <path d="M64 180 L72 230 H128 L136 180 Z" fill="#eeece7" stroke="#e2e0da"/>
+            <path d="M76 190 H124" stroke="#e2e0da"/>
+          </g>
+        </svg>
+        <span class="pw-gain" id="gain"></span>
+      </div>
+      <div class="pw-progress">
+        <div class="pw-progress-row"><span id="progLabel">つぎの姿まで</span><span id="progPct">0%</span></div>
+        <div class="pw-bar"><div class="pw-bar-fill" id="barFill"></div></div>
+      </div>
+      <div class="pw-stats">
+        <div class="pw-stat"><div class="pw-stat-v" id="stTalks">0</div><div class="pw-stat-k">会話</div></div>
+        <div class="pw-stat"><div class="pw-stat-v" id="stDiary">0</div><div class="pw-stat-k">日記</div></div>
+        <div class="pw-stat"><div class="pw-stat-v" id="stXp">0</div><div class="pw-stat-k">成長</div></div>
+      </div>
+    </div>
+
+    <div class="pw-side">
+      <div class="pw-quick">
+        <button class="pw-q" data-q="おはよう！">おはよう！</button>
+        <button class="pw-q" data-q="今日あったこと聞いて">今日あったこと聞いて</button>
+        <button class="pw-q" data-q="ありがとう、パセリっち">ありがとう</button>
+      </div>
+      <div class="pw-diaryhead">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11.1504 16.9189C11.6853 16.6515 12.3147 16.6515 12.8496 16.9189L17.9551 19.4717C18.0216 19.5049 18.0996 19.4562 18.0996 19.3818V5C18.0996 4.94477 18.0552 4.90039 18 4.90039H6C5.94477 4.90039 5.90039 4.94477 5.90039 5V19.3818C5.90039 19.4562 5.97843 19.5049 6.04492 19.4717L11.1504 16.9189Z" fill="currentColor"/></svg>
+        <span>育成日記</span>
+        <span class="pw-diaryhint">話しかけると自動で記録されるよ</span>
+      </div>
+      <div class="pw-diary" id="diary"></div>
+    </div>
+  </div>
+
+  <form class="pw-inputrow" id="talkForm">
+    <input class="pw-input" id="talkInput" type="text" placeholder="パセリっちに話しかける…" maxlength="120" autocomplete="off"/>
+    <button class="pw-send" type="submit">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 4.09961C20.1539 4.09961 21.9004 5.84609 21.9004 8V16C21.9004 18.1539 20.1539 19.9004 18 19.9004H6C3.84609 19.9004 2.09961 18.1539 2.09961 16V8C2.09961 5.84609 3.84609 4.09961 6 4.09961H18ZM6 5.90039C5.0746 5.90039 4.29039 6.49909 4.01074 7.33008L11.4316 11.9971C11.7861 12.2199 12.2361 12.2222 12.5928 12.0029L20.0195 7.43457C19.7725 6.54993 18.9636 5.90039 18 5.90039H6Z" fill="currentColor"/></svg>
+      <span>話しかける</span>
+    </button>
+  </form>
+  <button class="pw-reset" id="resetBtn">最初から育てる</button>
+</div>
+
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)};
+var NS='http://www.w3.org/2000/svg';
+function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e}
+function leafD(L,W){var d='M0 0',st=6,i,t,y,w;
+for(i=1;i<=st;i++){t=i/st;y=-L*t;w=W*Math.sin(Math.PI*t)*(i%2?1:0.6);d+='L'+w.toFixed(1)+' '+y.toFixed(1)+' '}
+for(i=st;i>=1;i--){t=i/st;y=-L*t;w=-W*Math.sin(Math.PI*t)*(i%2?1:0.6);d+='L'+w.toFixed(1)+' '+y.toFixed(1)+' '}
+return d+'Z'}
+function buildStage(id,count,L,W,flowers){
+var g=el('g',{id:id,'class':'st'}),k,t,L2,gg;
+for(k=0;k<count;k++){t=count===1?0:(k/(count-1))*2-1;L2=L*(0.8+0.35*Math.abs(t||0.4));
+g.appendChild(el('path',{d:'M0 2 Q '+(t*8).toFixed(1)+' '+(-L2*0.5).toFixed(1)+' '+(t*13).toFixed(1)+' '+(-L2+4).toFixed(1),'class':'stem'}));
+gg=el('g',{transform:'translate('+(t*13).toFixed(1)+' '+(-L2+4).toFixed(1)+') rotate('+(t*16).toFixed(1)+')'});
+gg.appendChild(el('path',{d:leafD(L2*0.9,W),'class':'leaf'}));
+if(flowers&&k%2===0)gg.appendChild(el('circle',{cx:0,cy:(-L2*0.9-6).toFixed(1),r:4,'class':'flower'}));
+g.appendChild(gg)}
+document.getElementById('plant').appendChild(g)}
+var g0=el('g',{id:'st0','class':'st'});
+g0.appendChild(el('ellipse',{cx:100,cy:171,rx:5,ry:3.5,fill:'#8a8880'}));
+document.getElementById('plant').appendChild(g0);
+var g1=el('g',{id:'st1','class':'st'});
+g1.appendChild(el('path',{d:'M100 170 L100 138','class':'stem'}));
+g1.appendChild(el('path',{d:'M100 142 C 88 138 84 126 92 120 C 100 122 102 132 100 142 Z','class':'leaf'}));
+g1.appendChild(el('path',{d:'M100 142 C 112 138 116 126 108 120 C 100 122 98 132 100 142 Z','class':'leaf'}));
+document.getElementById('plant').appendChild(g1);
+buildStage('st2',3,42,10,false);
+buildStage('st3',5,62,14,false);
+buildStage('st4',7,84,18,false);
+buildStage('st5',7,96,20,true);
+
+var stages=[{n:'タネ',xp:0},{n:'発芽',xp:15},{n:'双葉',xp:45},{n:'わかば',xp:110},{n:'パセリっち',xp:220},{n:'大パセリ',xp:400},{n:'花さくパセリ',xp:650}];
+var POS=['嬉しい','ありがとう','楽しい','幸せ','好き','最高','すごい','よかった','大好き','元気','わくわく','楽しみ'];
+var NEG=['悲しい','つらい','疲れた','苦しい','不安','寂しい','怒','むかつく','無理','さびしい','かなしい','ねむい'];
+var RE={pos:['きゃっ、嬉しいな！葉っぱがぴょこんってのびたよ','ありがとう！みずみずしくなった気がする','えへへ、ぼくも大好きだよ。新芽がふえた！'],
+neg:['だいじょうぶ。ぼくがそばにいるよ。葉先でそっとふれてあげる','つらい日もあるよね。少しずつ、いっしょにのびていこう','深呼吸して。ぼくの葉っぱ、貸してあげる。ゆっくりしていって'],
+q:['ぼくはパセリ。話しかけてくれると、どんどん育つんだ','日記を書くと葉っぱがふえるよ。今日あったこと、きかせて？','たまごっちみたいに育ててね。ちがうのは、あなたの言葉が枝になるとこ'],
+def:['ふむふむ、きかせてくれてありがとう。葉っぱがひとまいふえたよ','それいいね！ぼくの茎がぐんってなった','へえー！知識（パセリ的な意味で）がふえた気がする','あはは、おもしろい！蕾がふくらんだよ','そっかそっか。根っこがぐっと張ったよ']};
+var S;
+try{S=JSON.parse(localStorage.getItem('paseritchi')||'null')}catch(e){}
+if(!S||typeof S.xp!=='number')S={xp:0,talks:0,entries:[],mood:''};
+function save(){try{localStorage.setItem('paseritchi',JSON.stringify(S))}catch(e){}}
+function stageIdx(){var i=0;stages.forEach(function(s,j){if(S.xp>=s.xp)i=j});return i}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function render(){
+var i=stageIdx(),cur=stages[i],next=stages[i+1];
+document.getElementById('stageBadge').textContent=cur.n;
+for(var j=0;j<=5;j++){var g=document.getElementById('st'+j);if(g)g.classList.toggle('on',j===Math.min(i,5))}
+var p=next?(S.xp-cur.xp)/(next.xp-cur.xp):1;p=Math.max(0,Math.min(1,p));
+document.getElementById('barFill').style.width=Math.round(p*100)+'%';
+document.getElementById('progPct').textContent=Math.round(p*100)+'%';
+document.getElementById('progLabel').textContent=next?('つぎの「'+next.n+'」まで'):'さいだいの姿！';
+document.getElementById('plant').style.transform='scale('+(0.85+0.2*p)+')';
+document.getElementById('stTalks').textContent=S.talks;
+document.getElementById('stDiary').textContent=S.entries.length;
+document.getElementById('stXp').textContent=Math.round(S.xp);
+var mc=document.getElementById('moodChip');
+if(S.mood==='pos'){mc.textContent='ごきげん';mc.className='pw-chip good'}
+else if(S.mood==='neg'){mc.textContent='そっと見守り中';mc.className='pw-chip care'}
+else{mc.textContent='ふつう';mc.className='pw-chip'}
+var d=document.getElementById('diary');d.innerHTML='';
+if(!S.entries.length){d.innerHTML='<div class="pw-empty">まだ日記はないよ。なにか話しかけてみて。</div>'}
+S.entries.slice().reverse().forEach(function(en,ri){
+var idx=S.entries.length-1-ri;
+var row=document.createElement('div');row.className='pw-entry';
+row.innerHTML='<div><span class="pw-entry-t">'+en.t+'</span>　<span class="pw-entry-x">+'+en.x+' 成長</span></div><div class="pw-entry-b">'+en.b+'</div><button class="pw-del" aria-label="削除">×</button>';
+row.querySelector('.pw-del').onclick=function(){S.entries.splice(idx,1);save();render()};
+d.appendChild(row)});
+save()}
+var busy=false;
+function talk(msg){
+if(busy||!msg.trim())return;busy=true;
+document.getElementById('bubbleText').textContent='……';
+var isPos=POS.some(function(w){return msg.indexOf(w)>=0});
+var isNeg=!isPos&&NEG.some(function(w){return msg.indexOf(w)>=0});
+var isQ=/[？?]$/.test(msg.trim());
+var mood=isPos?'pos':isNeg?'neg':'';
+S.mood=mood;
+var gain=Math.round(10+Math.min(msg.length,60)/6+(isPos?8:isNeg?5:0));
+var prev=stageIdx();S.xp+=gain;S.talks++;
+var i=stageIdx();
+var reply=pick(isPos?RE.pos:isNeg?RE.neg:isQ?RE.q:RE.def);
+var snippet=msg.length>18?msg.slice(0,18)+'…':msg;
+var diaryBody;
+if(i>prev){diaryBody='「'+esc(snippet)+'」って話しかけてくれた。パセリっちが「'+stages[i].n+'」に進化した！'}
+else if(isPos){diaryBody='「'+esc(snippet)+'」って話しかけてくれた。ごきげんな返事がかえってきて、葉っぱがふえた。'}
+else if(isNeg){diaryBody='「'+esc(snippet)+'」って打ち明けてくれた。ぼくはそっと葉で受け止めた。'}
+else{diaryBody='「'+esc(snippet)+'」って話しかけてくれた。言葉が養分になって、すこし育った。'}
+var now=new Date();
+S.entries.push({t:(now.getMonth()+1)+'/'+now.getDate()+' '+('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2),x:gain,b:diaryBody});
+render();
+var g=document.getElementById('gain');g.textContent='+'+gain+' 成長';g.classList.remove('show');void g.offsetWidth;g.classList.add('show');
+setTimeout(function(){document.getElementById('bubbleText').textContent=reply;busy=false},500)}
+document.getElementById('talkForm').addEventListener('submit',function(e){e.preventDefault();var v=document.getElementById('talkInput').value;document.getElementById('talkInput').value='';talk(v)});
+Array.prototype.forEach.call(document.querySelectorAll('.pw-q'),function(b){b.onclick=function(){talk(b.getAttribute('data-q'))}});
+var resetArmed=false,resetBtn=document.getElementById('resetBtn');
+resetBtn.onclick=function(){
+if(!resetArmed){resetArmed=true;this.textContent='本当にリセットする？もう一度押して';
+var self=this;setTimeout(function(){resetArmed=false;self.textContent='最初から育てる'},3000);return}
+S={xp:0,talks:0,entries:[],mood:''};resetArmed=false;this.textContent='最初から育てる';
+document.getElementById('bubbleText').textContent='またタネからはじめよう。よろしくね。';render()};
+render();
+})();
+</script>
+</body>
+</html>
