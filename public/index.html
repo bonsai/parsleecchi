@@ -94,15 +94,16 @@ body{background:#17171a;color:#e8e6e3}
       <div class="pw-bubble"><span id="bubbleText">はじめまして、ぼくパセリっち。話しかけてくれると、どんどん育つよ。</span></div>
       <div class="pw-stagebadge" id="stageBadge">タネ</div>
       <div class="pw-scenebox">
-        <svg viewBox="0 0 200 240" width="100%" aria-label="パセリっち">
+        <svg viewBox="0 0 200 240" width="100%" aria-label="パセリっち" style="display:block;">
           <ellipse cx="100" cy="171" rx="34" ry="6" fill="#eeece7"/>
-          <g id="plant"></g>
+          <g id="plant" style="display:none;"></g>
           <g>
             <rect x="58" y="164" width="84" height="14" rx="4" fill="#fff" stroke="#e2e0da"/>
             <path d="M64 180 L72 230 H128 L136 180 Z" fill="#eeece7" stroke="#e2e0da"/>
             <path d="M76 190 H124" stroke="#e2e0da"/>
           </g>
         </svg>
+        <div id="p5-holder" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
         <span class="pw-gain" id="gain"></span>
       </div>
       <div class="pw-progress">
@@ -126,7 +127,9 @@ body{background:#17171a;color:#e8e6e3}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11.1504 16.9189C11.6853 16.6515 12.3147 16.6515 12.8496 16.9189L17.9551 19.4717C18.0216 19.5049 18.0996 19.4562 18.0996 19.3818V5C18.0996 4.94477 18.0552 4.90039 18 4.90039H6C5.94477 4.90039 5.90039 4.94477 5.90039 5V19.3818C5.90039 19.4562 5.97843 19.5049 6.04492 19.4717L11.1504 16.9189Z" fill="currentColor"/></svg>
         <span>育成日記</span>
         <span class="pw-diaryhint">話しかけると自動で記録されるよ</span>
+        <button class="pw-q" id="summarizeBtn" type="button" style="margin-left:auto;">まとめる</button>
       </div>
+      <div id="summaryBox" class="pw-bubble" style="display:none;margin-top:4px;"></div>
       <div class="pw-diary" id="diary"></div>
     </div>
   </div>
@@ -149,32 +152,6 @@ body{background:#17171a;color:#e8e6e3}
 var $=function(s){return document.querySelector(s)};
 var NS='http://www.w3.org/2000/svg';
 function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e}
-function leafD(L,W){var d='M0 0',st=6,i,t,y,w;
-for(i=1;i<=st;i++){t=i/st;y=-L*t;w=W*Math.sin(Math.PI*t)*(i%2?1:0.6);d+='L'+w.toFixed(1)+' '+y.toFixed(1)+' '}
-for(i=st;i>=1;i--){t=i/st;y=-L*t;w=-W*Math.sin(Math.PI*t)*(i%2?1:0.6);d+='L'+w.toFixed(1)+' '+y.toFixed(1)+' '}
-return d+'Z'}
-function buildStage(id,count,L,W,flowers){
-var g=el('g',{id:id,'class':'st'}),k,t,L2,gg;
-for(k=0;k<count;k++){t=count===1?0:(k/(count-1))*2-1;L2=L*(0.8+0.35*Math.abs(t||0.4));
-g.appendChild(el('path',{d:'M0 2 Q '+(t*8).toFixed(1)+' '+(-L2*0.5).toFixed(1)+' '+(t*13).toFixed(1)+' '+(-L2+4).toFixed(1),'class':'stem'}));
-gg=el('g',{transform:'translate('+(t*13).toFixed(1)+' '+(-L2+4).toFixed(1)+') rotate('+(t*16).toFixed(1)+')'});
-gg.appendChild(el('path',{d:leafD(L2*0.9,W),'class':'leaf'}));
-if(flowers&&k%2===0)gg.appendChild(el('circle',{cx:0,cy:(-L2*0.9-6).toFixed(1),r:4,'class':'flower'}));
-g.appendChild(gg)}
-document.getElementById('plant').appendChild(g)}
-var g0=el('g',{id:'st0','class':'st'});
-g0.appendChild(el('ellipse',{cx:100,cy:171,rx:5,ry:3.5,fill:'#8a8880'}));
-document.getElementById('plant').appendChild(g0);
-var g1=el('g',{id:'st1','class':'st'});
-g1.appendChild(el('path',{d:'M100 170 L100 138','class':'stem'}));
-g1.appendChild(el('path',{d:'M100 142 C 88 138 84 126 92 120 C 100 122 102 132 100 142 Z','class':'leaf'}));
-g1.appendChild(el('path',{d:'M100 142 C 112 138 116 126 108 120 C 100 122 98 132 100 142 Z','class':'leaf'}));
-document.getElementById('plant').appendChild(g1);
-buildStage('st2',3,42,10,false);
-buildStage('st3',5,62,14,false);
-buildStage('st4',7,84,18,false);
-buildStage('st5',7,96,20,true);
-
 var stages=[{n:'タネ',xp:0},{n:'発芽',xp:15},{n:'双葉',xp:45},{n:'わかば',xp:110},{n:'パセリっち',xp:220},{n:'大パセリ',xp:400},{n:'花さくパセリ',xp:650}];
 var POS=['嬉しい','ありがとう','楽しい','幸せ','好き','最高','すごい','よかった','大好き','元気','わくわく','楽しみ'];
 var NEG=['悲しい','つらい','疲れた','苦しい','不安','寂しい','怒','むかつく','無理','さびしい','かなしい','ねむい'];
@@ -213,7 +190,7 @@ var row=document.createElement('div');row.className='pw-entry';
 row.innerHTML='<div><span class="pw-entry-t">'+en.t+'</span>　<span class="pw-entry-x">+'+en.x+' 成長</span></div><div class="pw-entry-b">'+en.b+'</div><button class="pw-del" aria-label="削除">×</button>';
 row.querySelector('.pw-del').onclick=function(){S.entries.splice(idx,1);save();render()};
 d.appendChild(row)});
-save()}
+save(); if(window.updateParsley) window.updateParsley(); }
 var busy=false;
 function talk(msg){
 if(busy||!msg.trim())return;busy=true;
@@ -261,8 +238,24 @@ rec.onresult=function(e){var t=e.results[0][0].transcript;document.getElementByI
 rec.onerror=function(){document.getElementById('bubbleText').textContent='ごめん、聞き取れなかったよ';isRec=false;micBtn.classList.remove('on');};
 }else{micBtn.style.display='none';}
 
+var summaryBtn=document.getElementById('summarizeBtn');
+var summaryBox=document.getElementById('summaryBox');
+summaryBtn.onclick=async function(){
+if(!S.entries.length){summaryBox.textContent='まだ日記がないよ。';summaryBox.style.display='block';return;}
+summaryBtn.disabled=true;summaryBtn.textContent='まとめ中…';summaryBox.style.display='none';
+try{
+var res=await fetch('/api/summarize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entries:S.entries.slice(-10)})});
+var data=await res.json();
+summaryBox.textContent=data.summary||'まとめられなかった…';
+summaryBox.style.display='block';
+}catch(e){summaryBox.textContent='まとめに失敗しました';summaryBox.style.display='block';}
+finally{summaryBtn.disabled=false;summaryBtn.textContent='まとめる';}
+};
+
 render();
 })();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<script src="sketch.js"></script>
 </body>
 </html>
